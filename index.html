@@ -351,6 +351,10 @@
         gap: 8px;
       }
 
+      .panel-title-actions h2 {
+        white-space: nowrap;
+      }
+
       .worker-context {
         display: flex;
         align-items: center;
@@ -1163,6 +1167,7 @@
         }
 
         .top-actions {
+          order: -1;
           flex: 1 1 360px;
           width: auto;
           align-items: center;
@@ -1240,6 +1245,10 @@
           grid-template-columns: 1fr;
         }
 
+        .top-actions {
+          flex-basis: 100%;
+        }
+
         .brand-logo {
           width: min(210px, 45vw);
           height: 34px;
@@ -1297,13 +1306,6 @@
                 </svg>
                 <span data-i18n="history">History</span>
               </button>
-              <button class="nav-button" title="Settings" aria-label="Settings">
-                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill="none" stroke="currentColor" stroke-width="2" />
-                  <path d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6 1.4 1.4m0-11.4-1.4 1.4m-8.6 8.6-1.4 1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <span>Settings</span>
-              </button>
             </nav>
           </div>
           <div class="top-actions">
@@ -1350,8 +1352,15 @@
               <div class="field">
                 <label for="itemCode" data-i18n="itemCode">Item Code</label>
                 <div class="input-row">
-                  <input id="itemCode" name="itemCode" value="TM-MEGO-005" autocomplete="off" />
-                  <button class="icon-button" type="button" title="Search item" aria-label="Search item">
+                  <input id="itemCode" name="itemCode" value="TM-MEGO-005" autocomplete="off" list="sampleItems" />
+                  <datalist id="sampleItems">
+                    <option value="TM-MEGO-005">Megger Insulation Tester</option>
+                    <option value="TL-LADR-012">Fiberglass Ladder</option>
+                    <option value="TE-CLMP-044">Clamp Meter</option>
+                    <option value="CS-LUG25-001">25mm Cable Lug</option>
+                    <option value="CS-FER25-001">2.5mm Ferrules</option>
+                  </datalist>
+                  <button class="icon-button" id="searchItemButton" type="button" title="Search item" aria-label="Search item">
                     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                       <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
                       <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -1372,8 +1381,8 @@
                 </div>
                 <div>
                   <div class="item-title-row">
-                    <h3>Megger Insulation Tester</h3>
-                    <span class="type-chip" data-i18n="returnable">Returnable</span>
+                    <h3 id="itemName">Megger Insulation Tester</h3>
+                    <span class="type-chip" id="itemTypeChip" data-i18n="returnable">Returnable</span>
                   </div>
                   <div class="stock-line" id="stockLine" aria-label="Stock by location"></div>
                 </div>
@@ -1969,6 +1978,10 @@
       const historyNav = document.querySelector("#historyNav");
       const langButtons = document.querySelectorAll(".lang-button");
       const stockLine = document.querySelector("#stockLine");
+      const itemCode = document.querySelector("#itemCode");
+      const itemName = document.querySelector("#itemName");
+      const itemTypeChip = document.querySelector("#itemTypeChip");
+      const searchItemButton = document.querySelector("#searchItemButton");
       const submitButton = document.querySelector("#submitButton");
       const resetButton = document.querySelector("#resetButton");
       const locationRow = document.querySelector("#locationRow");
@@ -1985,16 +1998,43 @@
       let activeAction = "OUT";
       let activeTeam = "Team A";
       let activeHistoryTab = "overview";
+      let sampleItemIndex = 0;
       let submitResetTimer;
       const workerStorageKey = "topaz-worker-profile";
       const langStorageKey = "topaz-language";
-      const stockByLocation = {
-        "Site Store": 1,
-        "Van 12": 2,
-        Platform: 1,
-        Office: 1,
-        Out: 0,
-      };
+      let stockByLocation = {};
+      const sampleItems = [
+        {
+          code: "TM-MEGO-005",
+          name: "Megger Insulation Tester",
+          type: "returnable",
+          stock: { "Site Store": 1, "Van 12": 2, Platform: 1, Office: 1, Out: 0 },
+        },
+        {
+          code: "TL-LADR-012",
+          name: "Fiberglass Ladder",
+          type: "returnable",
+          stock: { "Site Store": 2, "Van 12": 1, Platform: 0, Office: 0, Out: 1 },
+        },
+        {
+          code: "TE-CLMP-044",
+          name: "Clamp Meter",
+          type: "returnable",
+          stock: { "Site Store": 1, "Van 12": 1, Platform: 0, Office: 1, Out: 1 },
+        },
+        {
+          code: "CS-LUG25-001",
+          name: "25mm Cable Lug",
+          type: "consumable",
+          stock: { "Site Store": 76, "Van 12": 20, Platform: 12, Office: 0, Out: 0 },
+        },
+        {
+          code: "CS-FER25-001",
+          name: "2.5mm Ferrules",
+          type: "consumable",
+          stock: { "Site Store": 18, "Van 12": 50, Platform: 25, Office: 0, Out: 0 },
+        },
+      ];
 
       const translations = {
         en: {
@@ -2441,8 +2481,25 @@
       });
 
       document.querySelector("#scanButton").addEventListener("click", () => {
-        document.querySelector("#itemCode").value = "TM-MEGO-005";
+        selectSampleItem(sampleItems[0]);
         showToast(t("sampleQrLoaded"));
+      });
+
+      searchItemButton.addEventListener("click", () => {
+        const typedItem = sampleItems.find((item) => item.code.toLowerCase() === itemCode.value.trim().toLowerCase());
+        if (typedItem) {
+          selectSampleItem(typedItem);
+          return;
+        }
+        sampleItemIndex = (sampleItemIndex + 1) % sampleItems.length;
+        selectSampleItem(sampleItems[sampleItemIndex]);
+      });
+
+      itemCode.addEventListener("change", () => {
+        const typedItem = sampleItems.find((item) => item.code.toLowerCase() === itemCode.value.trim().toLowerCase());
+        if (typedItem) {
+          selectSampleItem(typedItem);
+        }
       });
 
       resetButton.addEventListener("click", () => {
@@ -2509,6 +2566,7 @@
       });
 
       applyLanguage(activeLang);
+      selectSampleItem(sampleItems[0], false);
       loadWorkerProfile();
       renderStockChips();
 
@@ -2540,6 +2598,10 @@
 
       function resetSelection() {
         setActiveAction("OUT");
+        const currentItem = sampleItems.find((item) => item.code === itemCode.value);
+        if (currentItem?.type === "consumable") {
+          setActiveAction("USE");
+        }
         setLocationChoice("fromLocation", "Site Store");
         setLocationChoice("toLocation", "Worker");
         updateLocationFields();
@@ -2650,6 +2712,26 @@
 
       function t(key) {
         return translations[activeLang]?.[key] || translations.en[key] || key;
+      }
+
+      function selectSampleItem(item, showLoadedToast = true) {
+        sampleItemIndex = sampleItems.findIndex((sample) => sample.code === item.code);
+        itemCode.value = item.code;
+        itemName.textContent = item.name;
+        stockByLocation = { ...item.stock };
+        const typeKey = item.type === "consumable" ? "consumable" : "returnable";
+        itemTypeChip.dataset.i18n = typeKey;
+        itemTypeChip.textContent = t(typeKey);
+        if (item.type === "consumable") {
+          setActiveAction("USE");
+        } else if (activeAction === "USE") {
+          setActiveAction("OUT");
+        }
+        updateLocationFields();
+        renderStockChips();
+        if (showLoadedToast) {
+          showToast(item.name);
+        }
       }
 
       function openProfileDrawer() {
