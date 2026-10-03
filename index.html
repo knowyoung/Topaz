@@ -313,6 +313,18 @@
         order: 2;
       }
 
+      .history-log {
+        order: 1;
+      }
+
+      .history-usage-summary {
+        order: 2;
+      }
+
+      .history-usage-table {
+        order: 3;
+      }
+
       .panel {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -1809,8 +1821,8 @@
               </div>
               <div class="dashboard-actions">
                 <div class="history-tabs" aria-label="History view">
-                  <button class="small-button primary history-tab-button" type="button" data-history-tab="overview" data-i18n="overview">Overview</button>
-                  <button class="small-button history-tab-button" type="button" data-history-tab="logs" data-i18n="fullLog">Full Log</button>
+                  <button class="small-button primary history-tab-button" type="button" data-history-tab="logs" data-i18n="movementHistory">Movement History</button>
+                  <button class="small-button history-tab-button" type="button" data-history-tab="overview" data-i18n="overview">Overview</button>
                 </div>
                 <button class="small-button primary" id="exportCsvButton" type="button" data-i18n="exportCsv">Export CSV</button>
                 <button class="small-button" type="button" data-usage-mode="day" data-i18n="dayView">Day</button>
@@ -1818,7 +1830,7 @@
               </div>
             </section>
 
-            <section class="insight-grid history-only" aria-label="Usage overview" hidden>
+            <section class="insight-grid history-only history-usage-summary" aria-label="Usage overview" hidden>
               <div class="panel metric">
                 <span data-i18n="usageToday">Used Today</span>
                 <strong id="usageToday">40</strong>
@@ -1833,7 +1845,7 @@
               </div>
             </section>
 
-            <section class="panel table-panel history-only" hidden>
+            <section class="panel table-panel history-only history-usage-table" hidden>
               <div class="panel-head toolbar">
                 <h2 data-i18n="consumableUsage">Consumable Usage</h2>
                 <div class="filters" aria-label="Usage filters">
@@ -1872,9 +1884,9 @@
               </div>
             </section>
 
-            <section class="panel table-panel history-only" hidden>
+            <section class="panel table-panel history-only history-log" hidden>
               <div class="panel-head toolbar">
-                <h2 data-i18n="fullLog">Full Log</h2>
+                <h2 data-i18n="movementHistory">Movement History</h2>
                 <div class="filters" aria-label="Log filters">
                   <button class="filter-button active" data-i18n="today">Today</button>
                   <button class="filter-button" data-i18n="tools">Tools</button>
@@ -1985,7 +1997,7 @@
 
       let activeAction = "OUT";
       let activeTeam = "Team A";
-      let activeHistoryTab = "overview";
+      let activeHistoryTab = "logs";
       let sampleItemIndex = 0;
       let submitResetTimer;
       const workerStorageKey = "topaz-worker-profile";
