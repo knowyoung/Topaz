@@ -1994,11 +1994,13 @@
       const usageRows = document.querySelector("#usageRows");
       const usageToday = document.querySelector("#usageToday");
       const usageMonth = document.querySelector("#usageMonth");
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKv1KVIXGtmmg1nsZ5_tsRKv6_2v7mQAzWn0xXmDUtBWSaN9V9GDr5mWa-xkELgnWRtg/exec";
 
       let activeAction = "OUT";
       let activeTeam = "Team A";
       let activeHistoryTab = "logs";
       let sampleItemIndex = 0;
+      let sheetHistoryLoaded = false;
       let submitResetTimer;
       const workerStorageKey = "topaz-worker-profile";
       const langStorageKey = "topaz-language";
@@ -2543,18 +2545,22 @@
         const ref = document.querySelector("#workRef").value;
         const historyLocation = activeAction === "IN" ? t("outLocation") : from;
         const historyStatus = activeAction === "USE" ? t("used") : to;
+        const record = {
+          timestamp: now.toISOString(),
+          time,
+          name: worker,
+          team: activeTeam,
+          itemCode: itemCode.value,
+          itemName: item,
+          action: activeAction,
+          qty: quantity,
+          location: historyLocation,
+          status: historyStatus,
+          ref,
+          remarks: document.querySelector("#remarks").value,
+        };
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${time}</td>
-          <td>${worker}</td>
-          <td><span class="tag ${tagClass[activeAction]}">${actionLabel(activeAction)}</span></td>
-          <td>${item}</td>
-          <td>${quantity}</td>
-          <td>${historyLocation}</td>
-          <td>${historyStatus}</td>
-          <td>${ref}</td>
-        `;
+        const row = renderHistoryRecord(record);
         historyRows.prepend(row);
         fullHistoryRows.prepend(row.cloneNode(true));
         loggedToday.textContent = String(Number(loggedToday.textContent) + 1);
@@ -2568,6 +2574,7 @@
         if (activeAction === "USE") {
           addUsageRow(item, quantity, from, ref);
         }
+        postSheetRecord(record);
         showSubmitLogged();
       });
 
@@ -2586,6 +2593,9 @@
         historyOnlySections.forEach((section) => {
           section.hidden = !(showHistory && activeHistoryTab === "logs");
         });
+        if (showHistory && activeHistoryTab === "logs") {
+          loadSheetHistory();
+        }
         viewButtons.forEach((button) => {
           button.classList.toggle("active", button.dataset.view === view);
         });
@@ -2717,6 +2727,100 @@
 
       function t(key) {
         return translations[activeLang]?.[key] || translations.en[key] || key;
+      }
+
+      function isSheetConnected() {
+        return GOOGLE_SCRIPT_URL.startsWith("https://script.google.com/macros/s/");
+      }
+
+      function loadSheetHistory(force = false) {
+        if (!isSheetConnected() || (sheetHistoryLoaded && !force)) {
+          return;
+        }
+        sheetHistoryLoaded = true;
+        const callbackName = "topazReceiveLogs";
+        document.querySelectorAll("[data-sheet-loader]").forEach((script) => script.remove());
+        const script = document.createElement("script");
+        script.dataset.sheetLoader = "true";
+        script.src = `${GOOGLE_SCRIPT_URL}?callback=${callbackName}&_=${Date.now()}`;
+        script.onerror = () => {
+          sheetHistoryLoaded = false;
+          showToast("Sheet history not loaded");
+        };
+        document.body.append(script);
+      }
+
+      window.topazReceiveLogs = (payload) => {
+        if (!payload?.ok || !Array.isArray(payload.logs)) {
+          showToast("Sheet history not loaded");
+          return;
+        }
+        renderSheetHistory(payload.logs);
+      };
+
+      function renderSheetHistory(logs) {
+        fullHistoryRows.innerHTML = "";
+        historyRows.innerHTML = "";
+        logs.forEach((record) => {
+          fullHistoryRows.append(renderHistoryRecord(record));
+          historyRows.append(renderHistoryRecord(record));
+        });
+      }
+
+      function renderHistoryRecord(record) {
+        const action = normalizeAction(record.action);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${formatRecordTime(record)}</td>
+          <td>${record.name || ""}</td>
+          <td><span class="tag ${tagClass[action] || "out"}">${actionLabel(action)}</span></td>
+          <td>${record.itemName || record.item || ""}</td>
+          <td>${record.qty || ""}</td>
+          <td>${record.location || ""}</td>
+          <td>${record.status || ""}</td>
+          <td>${record.ref || ""}</td>
+        `;
+        return row;
+      }
+
+      function normalizeAction(action) {
+        const value = String(action || "OUT").toUpperCase();
+        if (value === "TAKE") {
+          return "OUT";
+        }
+        if (value === "RETURN") {
+          return "IN";
+        }
+        return tagClass[value] ? value : "OUT";
+      }
+
+      function formatRecordTime(record) {
+        if (record.time) {
+          return record.time;
+        }
+        if (!record.timestamp) {
+          return "";
+        }
+        const date = new Date(record.timestamp);
+        if (Number.isNaN(date.getTime())) {
+          return String(record.timestamp);
+        }
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function postSheetRecord(record) {
+        if (!isSheetConnected()) {
+          return;
+        }
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+          },
+          body: JSON.stringify(record),
+        });
+        sheetHistoryLoaded = false;
       }
 
       function selectSampleItem(item, showLoadedToast = true) {
