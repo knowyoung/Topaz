@@ -1,0 +1,2828 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Topaz E&I</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18202b;
+        --muted: #687386;
+        --line: #dbe2ea;
+        --panel: #ffffff;
+        --page: #f4f7fa;
+        --navy: #1e3a5f;
+        --cyan: #0d9488;
+        --amber: #b7791f;
+        --red: #b42318;
+        --green: #247c47;
+        --soft-cyan: #e5f7f5;
+        --soft-amber: #fff4db;
+        --soft-red: #ffe9e6;
+        --shadow: 0 14px 34px rgba(15, 33, 54, 0.09);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .rail-logo {
+        width: 112px;
+        height: 44px;
+        object-fit: cover;
+        object-position: left center;
+        display: block;
+      }
+
+      .nav-button {
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 8px;
+        color: #243b60;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+
+      .nav-button.active,
+      .nav-button:hover {
+        background: #e8f0f8;
+        color: var(--navy);
+      }
+
+      .nav-button span,
+      .icon-button span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .profile-drawer {
+        position: fixed;
+        z-index: 8;
+        top: 74px;
+        left: 20px;
+        width: min(330px, calc(100vw - 100px));
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 12px;
+        transform: translateX(-130%);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          transform 160ms ease,
+          opacity 160ms ease;
+      }
+
+      .profile-drawer.open {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .profile-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .profile-head strong {
+        font-size: 15px;
+      }
+
+      .close-button {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--navy);
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .worker-mini {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid #b9d9d5;
+        background: var(--soft-cyan);
+        color: #075f58;
+        border-radius: 8px;
+        min-height: 34px;
+        padding: 6px 9px;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .main {
+        padding: 16px 20px;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 48px;
+        margin-bottom: 12px;
+      }
+
+      .title-block h1 {
+        font-size: 24px;
+        line-height: 1.16;
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      .title-block {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .brand-logo {
+        width: min(360px, 36vw);
+        height: 42px;
+        object-fit: contain;
+        object-position: left center;
+        display: block;
+      }
+
+      .top-nav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-left: 8px;
+        border-left: 1px solid var(--line);
+      }
+
+      .title-block p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .site-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        min-height: 38px;
+        padding: 7px 11px;
+        border-radius: 8px;
+        box-shadow: 0 6px 16px rgba(15, 33, 54, 0.05);
+        color: var(--navy);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .site-pill.compact {
+        min-height: 34px;
+        padding: 6px 9px;
+        box-shadow: none;
+        font-size: 13px;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+      }
+
+      .view-switch {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #e9eff5;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 4px;
+      }
+
+      .view-button {
+        min-height: 34px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #435064;
+        padding: 6px 11px;
+        font-weight: 900;
+      }
+
+      .view-button.active {
+        background: #ffffff;
+        color: var(--navy);
+        box-shadow: 0 3px 10px rgba(15, 33, 54, 0.08);
+      }
+
+      .lang-switch {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 4px;
+      }
+
+      .lang-button {
+        min-height: 34px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #435064;
+        padding: 6px 9px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .lang-button.active {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .view-panel[hidden] {
+        display: none;
+      }
+
+      #historyView {
+        order: 1;
+      }
+
+      #dashboardView {
+        order: 2;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .worker-panel {
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .panel-head {
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      .panel-title-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .worker-context {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .history-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .status-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--green);
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .status-dot::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--green);
+      }
+
+      .scan-strip {
+        padding: 12px;
+        background: #edf4f8;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .scan-button {
+        width: 100%;
+        min-height: 56px;
+        border: 1px solid #9fb3c8;
+        background: #ffffff;
+        color: var(--navy);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .scan-button:hover {
+        border-color: var(--cyan);
+      }
+
+      .scan-icon-button {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #9fb3c8;
+        background: #ffffff;
+        color: var(--navy);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+      }
+
+      .scan-icon-button:hover {
+        border-color: var(--cyan);
+        background: #f6fbfb;
+      }
+
+      .form-area {
+        padding: 12px;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .segment {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: #2b3647;
+        border-radius: 8px;
+        min-height: 46px;
+        padding: 5px;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .segment.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: white;
+      }
+
+      .team-buttons,
+      .choice-grid {
+        display: grid;
+        gap: 7px;
+      }
+
+      .team-buttons {
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 8px;
+      }
+
+      .choice-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .choice-button {
+        min-height: 44px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: #2b3647;
+        border-radius: 8px;
+        padding: 8px;
+        font-weight: 850;
+      }
+
+      .choice-button.active {
+        border-color: var(--cyan);
+        background: var(--soft-cyan);
+        color: #075f58;
+        box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.25);
+      }
+
+      .field {
+        margin-bottom: 10px;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        color: #4b586b;
+        margin-bottom: 6px;
+      }
+
+      .input-row {
+        display: grid;
+        grid-template-columns: 1fr 48px;
+        gap: 8px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        min-height: 46px;
+        padding: 10px 12px;
+        outline: none;
+      }
+
+      textarea {
+        min-height: 56px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+      }
+
+      .icon-button {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--navy);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        min-height: 46px;
+        position: relative;
+      }
+
+      .item-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 9px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .thumb {
+        width: 58px;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        background: #d8e3ed;
+        border: 1px solid #c1cfdd;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .item-card h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .item-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .item-title-row h3 {
+        margin: 0;
+      }
+
+      .item-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .stock-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 7px;
+      }
+
+      .stock-chip {
+        display: inline-flex;
+        padding: 5px 8px;
+        border-radius: 8px;
+        background: var(--soft-amber);
+        color: #7a4e00;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .type-chip {
+        display: inline-flex;
+        padding: 5px 8px;
+        border-radius: 8px;
+        background: #eef4fb;
+        color: var(--navy);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .two-col.single {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-field {
+        margin-bottom: 10px;
+      }
+
+      .quick-field[hidden] {
+        display: none;
+      }
+
+      .qty-control {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        gap: 7px;
+      }
+
+      .qty-control button {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        border-radius: 8px;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--navy);
+      }
+
+      .qty-control input {
+        text-align: center;
+      }
+
+      .photo-drop {
+        border: 1px dashed #aab8c7;
+        border-radius: 8px;
+        background: #fafcff;
+        padding: 10px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-height: 50px;
+      }
+
+      .photo-drop strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .submit-row {
+        display: grid;
+        grid-template-columns: 1fr 48px;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .primary-button {
+        min-height: 50px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--cyan);
+        color: white;
+        font-weight: 900;
+      }
+
+      .primary-button.logged {
+        background: var(--green);
+      }
+
+      .primary-button:hover {
+        background: #0b8178;
+      }
+
+      .danger-note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 12px;
+        color: #774312;
+        background: var(--soft-amber);
+        border: 1px solid #f6d489;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .dashboard {
+        display: grid;
+        gap: 18px;
+      }
+
+      .dashboard-head {
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .dashboard-head h2 {
+        margin: 0;
+        font-size: 19px;
+      }
+
+      .dashboard-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .dashboard-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .small-button {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--navy);
+        border-radius: 8px;
+        min-height: 36px;
+        padding: 7px 11px;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .small-button.primary {
+        border-color: var(--navy);
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(130px, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        padding: 14px;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 7px;
+      }
+
+      .metric strong {
+        font-size: 26px;
+        letter-spacing: 0;
+      }
+
+      .metric.good strong {
+        color: var(--green);
+      }
+
+      .metric.warn strong {
+        color: var(--amber);
+      }
+
+      .metric.bad strong {
+        color: var(--red);
+      }
+
+      .insight-grid {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.9fr) minmax(260px, 1fr) minmax(230px, 0.9fr);
+        gap: 12px;
+      }
+
+      .insight-panel {
+        padding: 14px;
+      }
+
+      .insight-panel h3 {
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
+
+      .custody-list,
+      .stock-list,
+      .evidence-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .custody-row,
+      .evidence-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px;
+      }
+
+      .custody-row strong,
+      .evidence-row strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .custody-row span,
+      .evidence-row span {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .count-badge {
+        min-width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #eef4fb;
+        color: var(--navy);
+        font-weight: 900;
+      }
+
+      .stock-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .stock-row-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .stock-row-header strong {
+        font-weight: 850;
+      }
+
+      .stock-row-header span {
+        color: var(--muted);
+      }
+
+      .stock-bar {
+        height: 8px;
+        background: #e8eef5;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .stock-fill {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--green);
+      }
+
+      .stock-fill.warn {
+        background: var(--amber);
+      }
+
+      .stock-fill.bad {
+        background: var(--red);
+      }
+
+      .evidence-thumb {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: #dbe8f2;
+        display: grid;
+        place-items: center;
+        color: var(--navy);
+      }
+
+      .dash-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.28fr) minmax(300px, 0.72fr);
+        gap: 18px;
+      }
+
+      .table-panel {
+        overflow: hidden;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 8px;
+      }
+
+      .filter-button {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: #3a4656;
+        min-height: 34px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .filter-button.active {
+        background: #eef7f6;
+        border-color: #9ad8d0;
+        color: #08645e;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        text-align: left;
+        border-top: 1px solid var(--line);
+        vertical-align: middle;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        background: #f8fafc;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .tag.out {
+        color: #7a4e00;
+        background: var(--soft-amber);
+      }
+
+      .tag.in {
+        color: #0f6b38;
+        background: #e6f6ed;
+      }
+
+      .tag.use {
+        color: #8b281f;
+        background: var(--soft-red);
+      }
+
+      .tag.transfer {
+        color: #0a5d83;
+        background: #e3f4fb;
+      }
+
+      .side-stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .alert-list {
+        padding: 0 16px 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .alert-item {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .alert-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--soft-red);
+        color: var(--red);
+      }
+
+      .alert-item h3 {
+        margin: 0 0 3px;
+        font-size: 14px;
+      }
+
+      .alert-item p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .model-flow {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(100px, 1fr));
+        gap: 8px;
+      }
+
+      .inventory-panel {
+        overflow: hidden;
+      }
+
+      .inventory-name {
+        display: grid;
+        gap: 3px;
+      }
+
+      .inventory-name strong {
+        font-size: 14px;
+      }
+
+      .inventory-name span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .stock-cell {
+        font-weight: 900;
+        color: var(--navy);
+      }
+
+      .stock-cell.zero {
+        color: #9aa6b7;
+        font-weight: 700;
+      }
+
+      .flow-node {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        min-height: 76px;
+        padding: 10px;
+        background: #ffffff;
+      }
+
+      .flow-node strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 5px;
+      }
+
+      .flow-node span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .toast {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        background: #132033;
+        color: #ffffff;
+        border-radius: 8px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        display: none;
+        font-weight: 800;
+      }
+
+      .toast.show {
+        display: block;
+      }
+
+      svg {
+        flex: none;
+      }
+
+      @media (max-width: 1120px) {
+        .workspace,
+        .dash-grid,
+        .insight-grid {
+          grid-template-columns: 1fr;
+        }
+
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          min-height: 100vh;
+        }
+
+        .mark,
+        .nav-button {
+          width: 40px;
+          height: 40px;
+        }
+
+        .main {
+          padding: 14px;
+        }
+
+        .profile-drawer {
+          top: 68px;
+          left: 12px;
+          width: calc(100vw - 24px);
+        }
+
+        .topbar {
+          align-items: center;
+          flex-direction: row;
+          flex-wrap: wrap;
+          min-height: auto;
+        }
+
+        .title-block {
+          flex: 1 1 190px;
+          width: auto;
+          justify-content: flex-start;
+          gap: 10px;
+        }
+
+        .brand-logo {
+          width: min(240px, 48vw);
+          height: 38px;
+        }
+
+        .top-nav {
+          order: 2;
+          flex-basis: 100%;
+          padding-left: 0;
+          border-left: 0;
+        }
+
+        .top-actions {
+          flex: 1 1 360px;
+          width: auto;
+          align-items: center;
+          justify-content: flex-end;
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+
+        .view-switch {
+          width: auto;
+          display: flex;
+        }
+
+        .lang-switch {
+          width: auto;
+          display: flex;
+        }
+
+        .site-pill {
+          width: auto;
+          justify-content: space-between;
+        }
+
+        .worker-panel {
+          max-width: none;
+        }
+
+        .metric-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .segmented {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .dashboard-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .dashboard-actions {
+          justify-content: flex-start;
+        }
+
+        .filters {
+          width: 100%;
+          overflow-x: auto;
+          padding-bottom: 3px;
+        }
+
+        table {
+          min-width: 780px;
+        }
+
+        .table-scroll {
+          overflow-x: auto;
+        }
+
+        .model-flow {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .brand-logo {
+          width: min(210px, 45vw);
+          height: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="profile-drawer" id="profileDrawer" aria-label="Worker profile">
+        <div class="profile-head">
+          <strong data-i18n="worker">Worker</strong>
+          <button class="close-button" id="closeProfile" type="button" aria-label="Close worker profile">×</button>
+        </div>
+        <div class="input-row">
+          <input id="workerName" name="workerName" placeholder="Your name" autocomplete="name" data-i18n-placeholder="yourName" />
+          <button class="icon-button" id="saveWorker" type="button" title="Remember worker" aria-label="Remember worker">
+            <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M8 4v6h8V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <span>Remember worker</span>
+          </button>
+        </div>
+        <div class="team-buttons" role="group" aria-label="Team">
+          <button class="choice-button team-choice active" type="button" data-team="Team A">Team A</button>
+          <button class="choice-button team-choice" type="button" data-team="Team B">Team B</button>
+          <button class="choice-button team-choice" type="button" data-team="Store">Store</button>
+        </div>
+      </section>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="title-block">
+            <img class="brand-logo" src="assets/topaz-logo.png" alt="Topaz E&I PTE LTD" />
+            <nav class="top-nav" aria-label="Primary">
+              <button class="nav-button active" id="logNav" title="Log Movement" aria-label="Log Movement">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2" />
+                  <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span>Log Movement</span>
+              </button>
+              <button class="nav-button" id="inventoryNav" title="Inventory" aria-label="Inventory">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7l8-4 8 4-8 4-8-4z" fill="none" stroke="currentColor" stroke-width="2" />
+                  <path d="M4 7v10l8 4 8-4V7M12 11v10" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+                <span data-i18n="inventory">Inventory</span>
+              </button>
+              <button class="nav-button" id="historyNav" title="History" aria-label="History">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 8v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <path d="M3.5 12a8.5 8.5 0 1 0 2.2-5.7L4 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span data-i18n="history">History</span>
+              </button>
+              <button class="nav-button" title="Settings" aria-label="Settings">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill="none" stroke="currentColor" stroke-width="2" />
+                  <path d="M4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6 1.4 1.4m0-11.4-1.4 1.4m-8.6 8.6-1.4 1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span>Settings</span>
+              </button>
+            </nav>
+          </div>
+          <div class="top-actions">
+            <div class="lang-switch" aria-label="Language switch">
+              <button class="lang-button active" type="button" data-lang="en">EN</button>
+              <button class="lang-button" type="button" data-lang="ko">한국어</button>
+              <button class="lang-button" type="button" data-lang="ta">தமிழ்</button>
+            </div>
+          </div>
+        </header>
+
+        <section class="workspace">
+          <section class="panel worker-panel view-panel" id="logView" aria-label="Worker logging form">
+            <div class="panel-head">
+              <div class="panel-title-actions">
+                <h2 data-i18n="quickLog">Quick Log</h2>
+                <button class="scan-icon-button" id="scanButton" type="button" title="Scan QR / Barcode" aria-label="Scan QR / Barcode">
+                  <svg width="23" height="23" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div class="worker-context">
+                <button class="worker-mini" id="profileChip" type="button">
+                  <span id="workerDisplay">Not set / Team A</span>
+                </button>
+                <div class="site-pill compact">
+                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="2" />
+                    <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                  CRL Station Box B2
+                </div>
+              </div>
+            </div>
+
+            <form class="form-area" id="movementForm">
+              <div class="segmented" role="group" aria-label="Movement Type">
+                <button type="button" class="segment active" data-action="OUT" data-i18n="out">OUT</button>
+                <button type="button" class="segment" data-action="IN" data-i18n="in">IN</button>
+              </div>
+
+              <div class="field">
+                <label for="itemCode" data-i18n="itemCode">Item Code</label>
+                <div class="input-row">
+                  <input id="itemCode" name="itemCode" value="TM-MEGO-005" autocomplete="off" />
+                  <button class="icon-button" type="button" title="Search item" aria-label="Search item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+                      <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <span>Search item</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="item-card">
+                <div class="thumb" aria-hidden="true">
+                  <svg width="54" height="54" viewBox="0 0 64 64">
+                    <rect x="15" y="8" width="34" height="48" rx="5" fill="#ffffff" stroke="#6b7d90" stroke-width="3" />
+                    <rect x="22" y="15" width="20" height="10" rx="2" fill="#d7ecf5" />
+                    <circle cx="32" cy="39" r="9" fill="none" stroke="#0d9488" stroke-width="4" />
+                    <path d="M28 39h8" stroke="#0d9488" stroke-width="3" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="item-title-row">
+                    <h3>Megger Insulation Tester</h3>
+                    <span class="type-chip" data-i18n="returnable">Returnable</span>
+                  </div>
+                  <div class="stock-line" id="stockLine" aria-label="Stock by location"></div>
+                </div>
+              </div>
+
+              <div class="two-col location-row single" id="locationRow">
+                <div class="quick-field" id="primaryLocationField">
+                  <label id="primaryLocationLabel" data-i18n="takeFrom">Take from</label>
+                  <div class="choice-grid" role="group" aria-label="Stock location">
+                    <button class="choice-button location-choice active" type="button" data-target="fromLocation" data-value="Site Store" data-i18n="siteStore">Site Store</button>
+                    <button class="choice-button location-choice" type="button" data-target="fromLocation" data-value="Van 12">Van 12</button>
+                    <button class="choice-button location-choice" type="button" data-target="fromLocation" data-value="Platform" data-i18n="platform">Platform</button>
+                    <button class="choice-button location-choice" type="button" data-target="fromLocation" data-value="Office" data-i18n="office">Office</button>
+                  </div>
+                  <input id="fromLocation" name="fromLocation" type="hidden" value="Site Store" />
+                </div>
+
+                <div class="quick-field" id="secondaryLocationField" hidden>
+                  <label id="secondaryLocationLabel" data-i18n="returnTo">Return to</label>
+                  <div class="choice-grid" role="group" aria-label="Status or destination">
+                    <button class="choice-button location-choice active" type="button" data-target="toLocation" data-value="Site Store" data-i18n="store">Store</button>
+                    <button class="choice-button location-choice" type="button" data-target="toLocation" data-value="Van 12">Van 12</button>
+                    <button class="choice-button location-choice" type="button" data-target="toLocation" data-value="Platform" data-i18n="platform">Platform</button>
+                    <button class="choice-button location-choice" type="button" data-target="toLocation" data-value="Office" data-i18n="office">Office</button>
+                  </div>
+                  <input id="toLocation" name="toLocation" type="hidden" value="Site Store" />
+                </div>
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label for="qty" data-i18n="quantity">Quantity</label>
+                  <div class="qty-control">
+                    <button type="button" id="decreaseQty" aria-label="Decrease quantity">-</button>
+                    <input id="qty" name="qty" type="number" value="1" min="1" inputmode="numeric" />
+                    <button type="button" id="increaseQty" aria-label="Increase quantity">+</button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="workRef" data-i18n="permit">Permit / WO</label>
+                  <input id="workRef" name="workRef" value="PTW-CRL-B2-184" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="remarks" data-i18n="remarks">Remarks</label>
+                <textarea id="remarks" name="remarks">For cable insulation test at platform DB.</textarea>
+              </div>
+
+              <label class="photo-drop" for="photoInput">
+                <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h4l2-2h4l2 2h4v12H4z" fill="none" stroke="currentColor" stroke-width="2" />
+                  <circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+                <span><strong data-i18n="attachPhoto">Attach photo</strong><span data-i18n="photoRule">Required for returns, damaged items, and high-value equipment.</span></span>
+                <input id="photoInput" type="file" accept="image/*" capture="environment" hidden />
+              </label>
+
+              <div class="submit-row">
+                <button class="primary-button" id="submitButton" type="submit" data-i18n="submit">Submit Movement</button>
+                <button class="icon-button" id="resetButton" type="button" title="Reset selection" aria-label="Reset selection">
+                  <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <path d="M5.5 12A7 7 0 1 0 8 6.7L4 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  <span data-i18n="resetSelection">Reset selection</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="dashboard view-panel" id="dashboardView" aria-label="Overview" hidden>
+            <section class="panel dashboard-head">
+              <div>
+                <h2 data-i18n="overview">Overview</h2>
+                <p data-i18n="overviewDesc">Live view of site movements, stock risk, custody, and exceptions.</p>
+              </div>
+              <div class="dashboard-actions">
+                <button class="small-button primary" type="button" data-i18n="exportCsv">Export CSV</button>
+                <button class="small-button" type="button" data-i18n="printReport">Print Report</button>
+                <button class="small-button" type="button" data-i18n="lowStockOnly">Low Stock Only</button>
+              </div>
+            </section>
+
+            <div class="metric-grid">
+              <div class="panel metric good">
+                <span data-i18n="loggedToday">Logged Today</span>
+                <strong id="loggedToday">28</strong>
+              </div>
+              <div class="panel metric warn">
+                <span data-i18n="outWithWorkers">Out With Workers</span>
+                <strong id="outCount">14</strong>
+              </div>
+              <div class="panel metric bad">
+                <span data-i18n="lowStock">Low Stock</span>
+                <strong>6</strong>
+              </div>
+              <div class="panel metric">
+                <span data-i18n="pendingReturn">Pending Return</span>
+                <strong>3</strong>
+              </div>
+            </div>
+
+            <section class="insight-grid" aria-label="Dashboard overview">
+              <div class="panel insight-panel">
+                <h3 data-i18n="openCustody">Open Custody</h3>
+                <div class="custody-list">
+                  <div class="custody-row">
+                    <div>
+                      <strong>Ahmad / Team A</strong>
+                      <span data-i18n="custodyAhmad">Megger tester, ladder, crimping kit</span>
+                    </div>
+                    <div class="count-badge">3</div>
+                  </div>
+                  <div class="custody-row">
+                    <div>
+                      <strong>Ravi / Van 12</strong>
+                      <span data-i18n="custodyRavi">Clamp meter due for calibration soon</span>
+                    </div>
+                    <div class="count-badge">4</div>
+                  </div>
+                  <div class="custody-row">
+                    <div>
+                      <strong>Wei Ming / Team B</strong>
+                      <span data-i18n="custodyWei">1 item overdue for return</span>
+                    </div>
+                    <div class="count-badge">2</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel insight-panel">
+                <h3 data-i18n="stockHealth">Stock Health</h3>
+                <div class="stock-list">
+                  <div class="stock-row">
+                    <div class="stock-row-header">
+                      <strong data-i18n="ferrules">2.5mm ferrules</strong>
+                      <span data-i18n="stockFerrules">18 left / min 50</span>
+                    </div>
+                    <div class="stock-bar"><span class="stock-fill bad" style="width: 22%"></span></div>
+                  </div>
+                  <div class="stock-row">
+                    <div class="stock-row-header">
+                      <strong data-i18n="cableLugs">25mm cable lugs</strong>
+                      <span data-i18n="stockLugs">76 left / min 80</span>
+                    </div>
+                    <div class="stock-bar"><span class="stock-fill warn" style="width: 48%"></span></div>
+                  </div>
+                  <div class="stock-row">
+                    <div class="stock-row-header">
+                      <strong data-i18n="conduitBends">32mm conduit bends</strong>
+                      <span data-i18n="stockBends">140 left / min 60</span>
+                    </div>
+                    <div class="stock-bar"><span class="stock-fill" style="width: 82%"></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel insight-panel">
+                <h3 data-i18n="evidenceQueue">Evidence Queue</h3>
+                <div class="evidence-list">
+                  <div class="evidence-row">
+                    <div>
+                      <strong data-i18n="photoMissing">Photo missing</strong>
+                      <span data-i18n="hammerDamaged">Hammer drill returned damaged</span>
+                    </div>
+                    <div class="evidence-thumb">
+                      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 7h4l2-2h4l2 2h4v12H4z" fill="none" stroke="currentColor" stroke-width="2" />
+                        <path d="M9 14h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="evidence-row">
+                    <div>
+                      <strong data-i18n="returnOverdue">Return overdue</strong>
+                      <span data-i18n="testerOut">Insulation tester out for 2 days</span>
+                    </div>
+                    <div class="evidence-thumb">
+                      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 8v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="dash-grid">
+              <section class="panel table-panel">
+                <div class="panel-head toolbar">
+                  <h2 data-i18n="movementHistory">Movement History</h2>
+                  <div class="filters" aria-label="History filters">
+                    <button class="filter-button active" data-i18n="today">Today</button>
+                    <button class="filter-button" data-i18n="tools">Tools</button>
+                    <button class="filter-button" data-i18n="consumables">Consumables</button>
+                    <button class="filter-button" data-i18n="photos">Photos</button>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th data-i18n="time">Time</th>
+                        <th data-i18n="name">Name</th>
+                        <th data-i18n="action">Action</th>
+                        <th data-i18n="item">Item</th>
+                        <th data-i18n="qty">Qty</th>
+                        <th data-i18n="stockLocation">Location</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="ref">Ref</th>
+                      </tr>
+                    </thead>
+                    <tbody id="historyRows">
+                      <tr>
+                        <td>17:20</td>
+                        <td>Ahmad</td>
+                        <td><span class="tag out">TAKE</span></td>
+                        <td>Megger Insulation Tester</td>
+                        <td>1</td>
+                        <td>Site Store</td>
+                        <td>Team A</td>
+                        <td>PTW-CRL-B2-184</td>
+                      </tr>
+                      <tr>
+                        <td>16:55</td>
+                        <td>Wei Ming</td>
+                        <td><span class="tag use">USE</span></td>
+                        <td>25mm Cable Lug</td>
+                        <td>40</td>
+                        <td>Site Store</td>
+                        <td>Station Platform</td>
+                        <td>WO-DB-77</td>
+                      </tr>
+                      <tr>
+                        <td>14:10</td>
+                        <td>Wei Ming</td>
+                        <td><span class="tag in">RETURN</span></td>
+                        <td>Crimping Tool Set</td>
+                        <td>1</td>
+                        <td>Team B</td>
+                        <td>Site Store</td>
+                        <td>PTW-CRL-B1-063</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <aside class="side-stack">
+                <section class="panel">
+                  <div class="panel-head">
+                    <h2 data-i18n="attention">Attention</h2>
+                  </div>
+                  <div class="alert-list">
+                    <div class="alert-item">
+                      <div class="alert-icon">
+                        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 8v5M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 data-i18n="calibrationDue">Calibration due in 8 days</h3>
+                        <p data-i18n="clampAssigned">Clamp meter CM-044 is still assigned to Van 12.</p>
+                      </div>
+                    </div>
+                    <div class="alert-item">
+                      <div class="alert-icon">
+                        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M6 19V5h12v14M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 data-i18n="lowStockFerrules">Low stock: ferrules</h3>
+                        <p data-i18n="ferrulesBelow">2.5mm ferrules below reorder level at Site Store.</p>
+                      </div>
+                    </div>
+                    <div class="alert-item">
+                      <div class="alert-icon">
+                        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M5 12h14M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 data-i18n="photoNeeded">Photo needed</h3>
+                        <p data-i18n="returnedHammer">Returned hammer drill marked damaged by Team C.</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="panel">
+                  <div class="panel-head">
+                    <h2 data-i18n="dataModel">Data Model</h2>
+                  </div>
+                  <div class="model-flow">
+                    <div class="flow-node">
+                      <strong data-i18n="item">Item</strong>
+                      <span data-i18n="modelItem">tool, consumable, test equipment</span>
+                    </div>
+                    <div class="flow-node">
+                      <strong data-i18n="location">Location</strong>
+                      <span data-i18n="modelLocation">store, vehicle, site zone, worker</span>
+                    </div>
+                    <div class="flow-node">
+                      <strong data-i18n="movement">Movement</strong>
+                      <span data-i18n="modelMovement">in, out, use, transfer, adjust</span>
+                    </div>
+                    <div class="flow-node">
+                      <strong data-i18n="evidence">Evidence</strong>
+                      <span data-i18n="modelEvidence">photo, signature, QR scan, remark</span>
+                    </div>
+                    <div class="flow-node">
+                      <strong data-i18n="balance">Balance</strong>
+                      <span data-i18n="modelBalance">current stock and open returns</span>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+            </div>
+          </section>
+
+          <section class="panel inventory-panel view-panel" id="inventoryView" aria-label="Inventory" hidden>
+            <div class="panel-head toolbar">
+              <h2 data-i18n="inventory">Inventory</h2>
+              <div class="filters" aria-label="Inventory filters">
+                <button class="filter-button active" data-i18n="allItems">All Items</button>
+                <button class="filter-button" data-i18n="tools">Tools</button>
+                <button class="filter-button" data-i18n="consumables">Consumables</button>
+                <button class="filter-button" data-i18n="lowStock">Low Stock</button>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="item">Item</th>
+                    <th data-i18n="type">Type</th>
+                    <th data-i18n="total">Total</th>
+                    <th data-i18n="siteStore">Site Store</th>
+                    <th data-i18n="office">Office</th>
+                    <th>Van 12</th>
+                    <th data-i18n="platform">Platform</th>
+                    <th data-i18n="outLocation">Out</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="inventory-name">
+                        <strong>Megger Insulation Tester</strong>
+                        <span>TM-MEGO-005</span>
+                      </div>
+                    </td>
+                    <td><span class="type-chip" data-i18n="returnable">Returnable</span></td>
+                    <td class="stock-cell" data-stock-total>5</td>
+                    <td class="stock-cell" data-stock-location="Site Store">1</td>
+                    <td class="stock-cell" data-stock-location="Office">1</td>
+                    <td class="stock-cell" data-stock-location="Van 12">2</td>
+                    <td class="stock-cell" data-stock-location="Platform">1</td>
+                    <td class="stock-cell" data-stock-location="Out">0</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="inventory-name">
+                        <strong>Clamp Meter</strong>
+                        <span>TM-CLMP-044</span>
+                      </div>
+                    </td>
+                    <td><span class="type-chip" data-i18n="returnable">Returnable</span></td>
+                    <td class="stock-cell">4</td>
+                    <td class="stock-cell">1</td>
+                    <td class="stock-cell">1</td>
+                    <td class="stock-cell">1</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell">1</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="inventory-name">
+                        <strong>Crimping Tool Set</strong>
+                        <span>TL-CRMP-012</span>
+                      </div>
+                    </td>
+                    <td><span class="type-chip" data-i18n="returnable">Returnable</span></td>
+                    <td class="stock-cell">3</td>
+                    <td class="stock-cell">2</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell">1</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="inventory-name">
+                        <strong>25mm Cable Lug</strong>
+                        <span>CO-LUG-25</span>
+                      </div>
+                    </td>
+                    <td><span class="type-chip" data-i18n="consumable">Consumable</span></td>
+                    <td class="stock-cell">76</td>
+                    <td class="stock-cell">36</td>
+                    <td class="stock-cell">20</td>
+                    <td class="stock-cell">20</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="inventory-name">
+                        <strong>2.5mm Ferrules</strong>
+                        <span>CO-FER-2.5</span>
+                      </div>
+                    </td>
+                    <td><span class="type-chip" data-i18n="consumable">Consumable</span></td>
+                    <td class="stock-cell">18</td>
+                    <td class="stock-cell">18</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                    <td class="stock-cell zero">0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="dashboard view-panel" id="historyView" aria-label="History" hidden>
+            <section class="panel dashboard-head">
+              <div>
+                <h2 data-i18n="history">History</h2>
+                <p data-i18n="historyDesc">Full movement log and consumable usage by day or month.</p>
+              </div>
+              <div class="dashboard-actions">
+                <div class="history-tabs" aria-label="History view">
+                  <button class="small-button primary history-tab-button" type="button" data-history-tab="overview" data-i18n="overview">Overview</button>
+                  <button class="small-button history-tab-button" type="button" data-history-tab="logs" data-i18n="fullLog">Full Log</button>
+                </div>
+                <button class="small-button primary" id="exportCsvButton" type="button" data-i18n="exportCsv">Export CSV</button>
+                <button class="small-button" type="button" data-usage-mode="day" data-i18n="dayView">Day</button>
+                <button class="small-button" type="button" data-usage-mode="month" data-i18n="monthView">Month</button>
+              </div>
+            </section>
+
+            <section class="insight-grid history-only" aria-label="Usage overview" hidden>
+              <div class="panel metric">
+                <span data-i18n="usageToday">Used Today</span>
+                <strong id="usageToday">40</strong>
+              </div>
+              <div class="panel metric">
+                <span data-i18n="usageMonth">Used This Month</span>
+                <strong id="usageMonth">420</strong>
+              </div>
+              <div class="panel metric warn">
+                <span data-i18n="topConsumable">Top Consumable</span>
+                <strong>25mm Lug</strong>
+              </div>
+            </section>
+
+            <section class="panel table-panel history-only" hidden>
+              <div class="panel-head toolbar">
+                <h2 data-i18n="consumableUsage">Consumable Usage</h2>
+                <div class="filters" aria-label="Usage filters">
+                  <button class="filter-button active" type="button" data-usage-mode="day" data-i18n="dayView">Day</button>
+                  <button class="filter-button" type="button" data-usage-mode="month" data-i18n="monthView">Month</button>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="period">Period</th>
+                      <th data-i18n="item">Item</th>
+                      <th data-i18n="qty">Qty</th>
+                      <th data-i18n="stockLocation">Location</th>
+                      <th data-i18n="ref">Ref</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usageRows">
+                    <tr>
+                      <td>Today</td>
+                      <td>25mm Cable Lug</td>
+                      <td>40</td>
+                      <td>Station Platform</td>
+                      <td>WO-DB-77</td>
+                    </tr>
+                    <tr>
+                      <td>Today</td>
+                      <td>2.5mm Ferrules</td>
+                      <td>18</td>
+                      <td>Site Store</td>
+                      <td>WO-DB-77</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel table-panel history-only" hidden>
+              <div class="panel-head toolbar">
+                <h2 data-i18n="fullLog">Full Log</h2>
+                <div class="filters" aria-label="Log filters">
+                  <button class="filter-button active" data-i18n="today">Today</button>
+                  <button class="filter-button" data-i18n="tools">Tools</button>
+                  <button class="filter-button" data-i18n="consumables">Consumables</button>
+                  <button class="filter-button" data-i18n="photos">Photos</button>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="time">Time</th>
+                      <th data-i18n="name">Name</th>
+                      <th data-i18n="action">Action</th>
+                      <th data-i18n="item">Item</th>
+                      <th data-i18n="qty">Qty</th>
+                      <th data-i18n="stockLocation">Location</th>
+                      <th data-i18n="status">Status</th>
+                      <th data-i18n="ref">Ref</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fullHistoryRows">
+                    <tr>
+                      <td>17:20</td>
+                      <td>Ahmad</td>
+                      <td><span class="tag out">TAKE</span></td>
+                      <td>Megger Insulation Tester</td>
+                      <td>1</td>
+                      <td>Site Store</td>
+                      <td>Team A</td>
+                      <td>PTW-CRL-B2-184</td>
+                    </tr>
+                    <tr>
+                      <td>16:55</td>
+                      <td>Wei Ming</td>
+                      <td><span class="tag use">USE</span></td>
+                      <td>25mm Cable Lug</td>
+                      <td>40</td>
+                      <td>Site Store</td>
+                      <td>Used</td>
+                      <td>WO-DB-77</td>
+                    </tr>
+                    <tr>
+                      <td>14:10</td>
+                      <td>Wei Ming</td>
+                      <td><span class="tag in">RETURN</span></td>
+                      <td>Crimping Tool Set</td>
+                      <td>1</td>
+                      <td>Out</td>
+                      <td>Site Store</td>
+                      <td>PTW-CRL-B1-063</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast">Movement logged</div>
+
+    <script>
+      const segments = document.querySelectorAll(".segment");
+      const qty = document.querySelector("#qty");
+      const toast = document.querySelector("#toast");
+      const historyRows = document.querySelector("#historyRows");
+      const loggedToday = document.querySelector("#loggedToday");
+      const outCount = document.querySelector("#outCount");
+      const workerName = document.querySelector("#workerName");
+      const workerDisplay = document.querySelector("#workerDisplay");
+      const teamChoices = document.querySelectorAll(".team-choice");
+      const locationChoices = document.querySelectorAll(".location-choice");
+      const saveWorker = document.querySelector("#saveWorker");
+      const profileDrawer = document.querySelector("#profileDrawer");
+      const profileToggle = document.querySelector("#profileToggle");
+      const closeProfile = document.querySelector("#closeProfile");
+      const profileChip = document.querySelector("#profileChip");
+      const viewButtons = document.querySelectorAll(".view-button");
+      const historyTabButtons = document.querySelectorAll(".history-tab-button");
+      const historyOnlySections = document.querySelectorAll(".history-only");
+      const logView = document.querySelector("#logView");
+      const dashboardView = document.querySelector("#dashboardView");
+      const inventoryView = document.querySelector("#inventoryView");
+      const historyView = document.querySelector("#historyView");
+      const logNav = document.querySelector("#logNav");
+      const inventoryNav = document.querySelector("#inventoryNav");
+      const historyNav = document.querySelector("#historyNav");
+      const langButtons = document.querySelectorAll(".lang-button");
+      const stockLine = document.querySelector("#stockLine");
+      const submitButton = document.querySelector("#submitButton");
+      const resetButton = document.querySelector("#resetButton");
+      const locationRow = document.querySelector("#locationRow");
+      const primaryLocationField = document.querySelector("#primaryLocationField");
+      const secondaryLocationField = document.querySelector("#secondaryLocationField");
+      const primaryLocationLabel = document.querySelector("#primaryLocationLabel");
+      const secondaryLocationLabel = document.querySelector("#secondaryLocationLabel");
+      const fullHistoryRows = document.querySelector("#fullHistoryRows");
+      const exportCsvButton = document.querySelector("#exportCsvButton");
+      const usageRows = document.querySelector("#usageRows");
+      const usageToday = document.querySelector("#usageToday");
+      const usageMonth = document.querySelector("#usageMonth");
+
+      let activeAction = "OUT";
+      let activeTeam = "Team A";
+      let activeHistoryTab = "overview";
+      let submitResetTimer;
+      const workerStorageKey = "topaz-worker-profile";
+      const langStorageKey = "topaz-language";
+      const stockByLocation = {
+        "Site Store": 1,
+        "Van 12": 2,
+        Platform: 1,
+        Office: 1,
+        Out: 0,
+      };
+
+      const translations = {
+        en: {
+          appTitle: "Topaz E&I",
+          worker: "Worker",
+          yourName: "Your name",
+          log: "Log",
+          overview: "Overview",
+          quickLog: "Quick Log",
+          scan: "Scan QR / Barcode",
+          itemCode: "Item Code",
+          from: "From",
+          to: "To",
+          stockLocation: "Location",
+          statusDestination: "Status",
+          status: "Status",
+          takeFrom: "Collect from",
+          returnTo: "Return to",
+          useFrom: "Use from",
+          moveFrom: "Move from",
+          moveTo: "Move to",
+          siteStore: "Site Store",
+          platform: "Platform",
+          cabinet: "Cabinet",
+          office: "Office",
+          outLocation: "Out",
+          meTeam: "Me / Team",
+          store: "Store",
+          inventory: "Inventory",
+          history: "History",
+          historyDesc: "Full movement log and consumable usage by day or month.",
+          total: "Total",
+          allItems: "All Items",
+          dayView: "Day",
+          monthView: "Month",
+          quantity: "Quantity",
+          permit: "Permit / WO",
+          remarks: "Remarks",
+          attachPhoto: "Attach photo",
+          photoRule: " Required for returns, damaged items, and high-value equipment.",
+          submit: "Submit Movement",
+          resetSelection: "Reset selection",
+          returnable: "Returnable",
+          consumable: "Consumable",
+          out: "TAKE",
+          in: "RETURN",
+          use: "USE",
+          move: "MOVE",
+          overviewDesc: "Live view of site movements, stock risk, custody, and exceptions.",
+          exportCsv: "Export CSV",
+          printReport: "Print Report",
+          lowStockOnly: "Low Stock Only",
+          loggedToday: "Logged Today",
+          outWithWorkers: "Out With Workers",
+          lowStock: "Low Stock",
+          pendingReturn: "Pending Return",
+          time: "Time",
+          name: "Name",
+          action: "Action",
+          item: "Item",
+          type: "Type",
+          qty: "Qty",
+          ref: "Ref",
+          used: "Used",
+          openCustody: "Open Custody",
+          custodyAhmad: "Megger tester, ladder, crimping kit",
+          custodyRavi: "Clamp meter due for calibration soon",
+          custodyWei: "1 item overdue for return",
+          stockHealth: "Stock Health",
+          ferrules: "2.5mm ferrules",
+          cableLugs: "25mm cable lugs",
+          conduitBends: "32mm conduit bends",
+          stockFerrules: "18 left / min 50",
+          stockLugs: "76 left / min 80",
+          stockBends: "140 left / min 60",
+          evidenceQueue: "Evidence Queue",
+          photoMissing: "Photo missing",
+          hammerDamaged: "Hammer drill returned damaged",
+          returnOverdue: "Return overdue",
+          testerOut: "Insulation tester out for 2 days",
+          movementHistory: "Movement History",
+          fullLog: "Full Log",
+          consumableUsage: "Consumable Usage",
+          usageToday: "Used Today",
+          usageMonth: "Used This Month",
+          topConsumable: "Top Consumable",
+          period: "Period",
+          today: "Today",
+          tools: "Tools",
+          consumables: "Consumables",
+          photos: "Photos",
+          attention: "Attention",
+          calibrationDue: "Calibration due in 8 days",
+          clampAssigned: "Clamp meter CM-044 is still assigned to Van 12.",
+          lowStockFerrules: "Low stock: ferrules",
+          ferrulesBelow: "2.5mm ferrules below reorder level at Site Store.",
+          photoNeeded: "Photo needed",
+          returnedHammer: "Returned hammer drill marked damaged by Team C.",
+          dataModel: "Data Model",
+          location: "Location",
+          movement: "Movement",
+          evidence: "Evidence",
+          balance: "Balance",
+          modelItem: "tool, consumable, test equipment",
+          modelLocation: "store, vehicle, site zone, worker",
+          modelMovement: "in, out, use, transfer, adjust",
+          modelEvidence: "photo, signature, QR scan, remark",
+          modelBalance: "current stock and open returns",
+          notSet: "Not set",
+          sampleQrLoaded: "Sample QR loaded",
+          enterName: "Enter your name once",
+          movementLogged: "Movement logged",
+          logged: "Logged",
+          workerRemembered: "Worker remembered",
+        },
+        ko: {
+          appTitle: "Topaz E&I",
+          worker: "작업자",
+          yourName: "이름",
+          log: "기록",
+          overview: "현황",
+          quickLog: "빠른 기록",
+          scan: "QR / 바코드 스캔",
+          itemCode: "품목 코드",
+          from: "출발",
+          to: "도착",
+          stockLocation: "위치",
+          statusDestination: "상태",
+          status: "상태",
+          takeFrom: "수령 위치",
+          returnTo: "반납 위치",
+          useFrom: "사용 위치",
+          moveFrom: "이동 출발",
+          moveTo: "이동 도착",
+          siteStore: "현장 창고",
+          platform: "플랫폼",
+          cabinet: "캐비닛",
+          office: "사무실",
+          outLocation: "반출",
+          meTeam: "나 / 팀",
+          store: "창고",
+          inventory: "재고",
+          history: "이력",
+          historyDesc: "전체 이동 기록과 일별/월별 소모품 사용량.",
+          total: "합계",
+          allItems: "전체 품목",
+          dayView: "일별",
+          monthView: "월별",
+          quantity: "수량",
+          permit: "허가 / 작업번호",
+          remarks: "메모",
+          attachPhoto: "사진 첨부",
+          photoRule: " 반납, 파손, 고가 장비에 필요합니다.",
+          submit: "이동 기록",
+          resetSelection: "선택 초기화",
+          returnable: "반납 필요",
+          consumable: "소모품",
+          out: "가져감",
+          in: "반납",
+          use: "사용",
+          move: "이동",
+          overviewDesc: "현장 이동, 재고 위험, 보유자, 예외 사항을 확인합니다.",
+          exportCsv: "CSV 내보내기",
+          printReport: "보고서 출력",
+          lowStockOnly: "부족 재고만",
+          loggedToday: "오늘 기록",
+          outWithWorkers: "작업자 보유",
+          lowStock: "부족 재고",
+          pendingReturn: "반납 대기",
+          time: "시간",
+          name: "이름",
+          action: "동작",
+          item: "품목",
+          type: "구분",
+          qty: "수량",
+          ref: "참조",
+          used: "사용됨",
+          openCustody: "보유 현황",
+          custodyAhmad: "메거 시험기, 사다리, 압착 공구",
+          custodyRavi: "클램프 미터 교정 예정",
+          custodyWei: "반납 지연 품목 1개",
+          stockHealth: "재고 상태",
+          ferrules: "2.5mm 페룰",
+          cableLugs: "25mm 케이블 러그",
+          conduitBends: "32mm 전선관 벤드",
+          stockFerrules: "18개 남음 / 최소 50",
+          stockLugs: "76개 남음 / 최소 80",
+          stockBends: "140개 남음 / 최소 60",
+          evidenceQueue: "증빙 대기",
+          photoMissing: "사진 없음",
+          hammerDamaged: "해머 드릴 파손 반납",
+          returnOverdue: "반납 지연",
+          testerOut: "절연 시험기 2일째 반출",
+          movementHistory: "이동 내역",
+          fullLog: "전체 기록",
+          consumableUsage: "소모품 사용량",
+          usageToday: "오늘 사용",
+          usageMonth: "이번 달 사용",
+          topConsumable: "최다 소모품",
+          period: "기간",
+          today: "오늘",
+          tools: "공구",
+          consumables: "소모품",
+          photos: "사진",
+          attention: "주의",
+          calibrationDue: "교정 8일 남음",
+          clampAssigned: "클램프 미터 CM-044는 아직 Van 12에 있습니다.",
+          lowStockFerrules: "부족 재고: 페룰",
+          ferrulesBelow: "2.5mm 페룰이 현장 창고 최소 수량보다 부족합니다.",
+          photoNeeded: "사진 필요",
+          returnedHammer: "반납된 해머 드릴이 Team C에 의해 파손 표시됨.",
+          dataModel: "데이터 모델",
+          location: "위치",
+          movement: "이동",
+          evidence: "증빙",
+          balance: "잔량",
+          modelItem: "공구, 소모품, 시험 장비",
+          modelLocation: "창고, 차량, 현장 구역, 작업자",
+          modelMovement: "반입, 반출, 사용, 이동, 조정",
+          modelEvidence: "사진, 서명, QR 스캔, 메모",
+          modelBalance: "현재 재고와 미반납 품목",
+          notSet: "미설정",
+          sampleQrLoaded: "샘플 QR 불러옴",
+          enterName: "이름을 한 번 입력하세요",
+          movementLogged: "이동 기록 완료",
+          logged: "기록됨",
+          workerRemembered: "작업자 저장됨",
+        },
+        ta: {
+          appTitle: "Topaz E&I",
+          worker: "பணியாளர்",
+          yourName: "உங்கள் பெயர்",
+          log: "பதிவு",
+          overview: "மேலோட்டம்",
+          quickLog: "விரைவு பதிவு",
+          scan: "QR / பார்கோடு ஸ்கேன்",
+          itemCode: "பொருள் குறியீடு",
+          from: "இருந்து",
+          to: "செல்லும் இடம்",
+          stockLocation: "இடம்",
+          statusDestination: "நிலை",
+          status: "நிலை",
+          takeFrom: "எடுக்கும் இடம்",
+          returnTo: "திருப்பும் இடம்",
+          useFrom: "பயன்படும் இடம்",
+          moveFrom: "நகரும் இடம்",
+          moveTo: "செல்லும் இடம்",
+          siteStore: "தள களஞ்சியம்",
+          platform: "பிளாட்பாரம்",
+          cabinet: "கேபினெட்",
+          office: "அலுவலகம்",
+          outLocation: "வெளியே",
+          meTeam: "நான் / குழு",
+          store: "களஞ்சியம்",
+          inventory: "இருப்பு",
+          history: "வரலாறு",
+          historyDesc: "முழு இயக்க பதிவு மற்றும் நாள்/மாத நுகர்பொருள் பயன்பாடு.",
+          total: "மொத்தம்",
+          allItems: "அனைத்து பொருட்கள்",
+          dayView: "நாள்",
+          monthView: "மாதம்",
+          quantity: "அளவு",
+          permit: "அனுமதி / வேலை எண்",
+          remarks: "குறிப்பு",
+          attachPhoto: "புகைப்படம்",
+          photoRule: " திருப்பல், சேதம், விலை உயர்ந்த கருவிகளுக்கு தேவை.",
+          submit: "இயக்கம் பதிவு",
+          resetSelection: "தேர்வு மீட்டமை",
+          returnable: "திருப்ப வேண்டியது",
+          consumable: "நுகர்பொருள்",
+          out: "எடு",
+          in: "திருப்பு",
+          use: "பயன்படுத்து",
+          move: "நகர்த்து",
+          overviewDesc: "தள இயக்கம், இருப்பு ஆபத்து, யாரிடம் உள்ளது, விதிவிலக்குகள்.",
+          exportCsv: "CSV ஏற்றுமதி",
+          printReport: "அறிக்கை அச்சிடு",
+          lowStockOnly: "குறைந்த இருப்பு மட்டும்",
+          loggedToday: "இன்று பதிவு",
+          outWithWorkers: "பணியாளரிடம் உள்ளது",
+          lowStock: "குறைந்த இருப்பு",
+          pendingReturn: "திருப்பல் நிலுவை",
+          time: "நேரம்",
+          name: "பெயர்",
+          action: "செயல்",
+          item: "பொருள்",
+          type: "வகை",
+          qty: "அளவு",
+          ref: "குறிப்பு",
+          used: "பயன்பட்டது",
+          openCustody: "யாரிடம் உள்ளது",
+          custodyAhmad: "மெகர் tester, ஏணி, crimping kit",
+          custodyRavi: "Clamp meter calibration விரைவில்",
+          custodyWei: "1 பொருள் திருப்பல் தாமதம்",
+          stockHealth: "இருப்பு நிலை",
+          ferrules: "2.5mm ferrules",
+          cableLugs: "25mm cable lugs",
+          conduitBends: "32mm conduit bends",
+          stockFerrules: "18 உள்ளது / குறைந்தது 50",
+          stockLugs: "76 உள்ளது / குறைந்தது 80",
+          stockBends: "140 உள்ளது / குறைந்தது 60",
+          evidenceQueue: "ஆதாரம் நிலுவை",
+          photoMissing: "புகைப்படம் இல்லை",
+          hammerDamaged: "Hammer drill சேதமாக திரும்பியது",
+          returnOverdue: "திருப்பல் தாமதம்",
+          testerOut: "Insulation tester 2 நாட்கள் வெளியே",
+          movementHistory: "இயக்க வரலாறு",
+          fullLog: "முழு பதிவு",
+          consumableUsage: "நுகர்பொருள் பயன்பாடு",
+          usageToday: "இன்று பயன்படுத்தியது",
+          usageMonth: "இந்த மாதம் பயன்படுத்தியது",
+          topConsumable: "அதிக பயன்பாடு",
+          period: "காலம்",
+          today: "இன்று",
+          tools: "கருவிகள்",
+          consumables: "நுகர்பொருட்கள்",
+          photos: "புகைப்படங்கள்",
+          attention: "கவனம்",
+          calibrationDue: "Calibration இன்னும் 8 நாட்கள்",
+          clampAssigned: "Clamp meter CM-044 இன்னும் Van 12-ல் உள்ளது.",
+          lowStockFerrules: "குறைந்த இருப்பு: ferrules",
+          ferrulesBelow: "2.5mm ferrules தள களஞ்சிய குறைந்த அளவுக்கு கீழே உள்ளது.",
+          photoNeeded: "புகைப்படம் தேவை",
+          returnedHammer: "திரும்பிய hammer drill Team C மூலம் சேதம் என குறிக்கப்பட்டது.",
+          dataModel: "தரவு மாதிரி",
+          location: "இடம்",
+          movement: "இயக்கம்",
+          evidence: "ஆதாரம்",
+          balance: "இருப்பு",
+          modelItem: "கருவி, நுகர்பொருள், சோதனை கருவி",
+          modelLocation: "களஞ்சியம், வாகனம், தள பகுதி, பணியாளர்",
+          modelMovement: "உள்ளே, வெளியே, பயன்பாடு, நகர்த்து, சரிசெய்",
+          modelEvidence: "புகைப்படம், கையொப்பம், QR ஸ்கேன், குறிப்பு",
+          modelBalance: "தற்போதைய இருப்பு மற்றும் திறந்த திருப்பல்கள்",
+          notSet: "அமைக்கவில்லை",
+          sampleQrLoaded: "மாதிரி QR ஏற்றப்பட்டது",
+          enterName: "பெயரை ஒருமுறை உள்ளிடுங்கள்",
+          movementLogged: "இயக்கம் பதிவு செய்யப்பட்டது",
+          logged: "பதிவு முடிந்தது",
+          workerRemembered: "பணியாளர் நினைவில் வைத்தது",
+        },
+      };
+
+      let activeLang = localStorage.getItem(langStorageKey) || "en";
+
+      const tagClass = {
+        OUT: "out",
+        IN: "in",
+        USE: "use",
+        TRANSFER: "transfer",
+      };
+
+      segments.forEach((button) => {
+        button.addEventListener("click", () => {
+          setActiveAction(button.dataset.action);
+          applyActionDefaults(button.dataset.action);
+        });
+      });
+
+      teamChoices.forEach((button) => {
+        button.addEventListener("click", () => {
+          teamChoices.forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          activeTeam = button.dataset.team;
+          saveWorkerProfile(false);
+          updateWorkerDisplay();
+        });
+      });
+
+      locationChoices.forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.target;
+          document
+            .querySelectorAll(`.location-choice[data-target="${target}"]`)
+            .forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          document.querySelector(`#${target}`).value = button.dataset.value;
+        });
+      });
+
+      saveWorker.addEventListener("click", () => {
+        saveWorkerProfile(true);
+        closeProfileDrawer();
+      });
+
+      if (profileToggle) {
+        profileToggle.addEventListener("click", () => {
+          profileDrawer.classList.toggle("open");
+        });
+      }
+
+      logNav.addEventListener("click", () => {
+        setView("log");
+      });
+
+      inventoryNav.addEventListener("click", () => {
+        setView("inventory");
+      });
+
+      historyNav.addEventListener("click", () => {
+        setView("history");
+      });
+
+      profileChip.addEventListener("click", () => {
+        openProfileDrawer();
+      });
+
+      closeProfile.addEventListener("click", () => {
+        closeProfileDrawer();
+      });
+
+      viewButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setView(button.dataset.view);
+        });
+      });
+
+      historyTabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setHistoryTab(button.dataset.historyTab);
+        });
+      });
+
+      langButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          applyLanguage(button.dataset.lang);
+        });
+      });
+
+      workerName.addEventListener("change", () => {
+        saveWorkerProfile(false);
+      });
+
+      workerName.addEventListener("input", () => {
+        updateWorkerDisplay();
+      });
+
+      document.querySelector("#increaseQty").addEventListener("click", () => {
+        qty.value = String(Math.max(1, Number(qty.value || 1) + 1));
+      });
+
+      document.querySelector("#decreaseQty").addEventListener("click", () => {
+        qty.value = String(Math.max(1, Number(qty.value || 1) - 1));
+      });
+
+      document.querySelector("#scanButton").addEventListener("click", () => {
+        document.querySelector("#itemCode").value = "TM-MEGO-005";
+        showToast(t("sampleQrLoaded"));
+      });
+
+      resetButton.addEventListener("click", () => {
+        resetSelection();
+      });
+
+      exportCsvButton.addEventListener("click", () => {
+        exportHistoryCsv();
+      });
+
+      document.querySelectorAll("[data-usage-mode]").forEach((button) => {
+        button.addEventListener("click", () => {
+          renderUsageRows(button.dataset.usageMode);
+        });
+      });
+
+      document.querySelector("#movementForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const worker = workerName.value.trim();
+        if (!worker) {
+          openProfileDrawer();
+          workerName.focus();
+          showToast(t("enterName"));
+          return;
+        }
+        saveWorkerProfile(false);
+
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const item = document.querySelector(".item-card h3").textContent;
+        const quantity = qty.value || "1";
+        const from = document.querySelector("#fromLocation").value;
+        const toValue = document.querySelector("#toLocation").value;
+        const to = formatDestination(toValue);
+        const ref = document.querySelector("#workRef").value;
+        const historyLocation = activeAction === "IN" ? t("outLocation") : from;
+        const historyStatus = activeAction === "USE" ? t("used") : to;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${time}</td>
+          <td>${worker}</td>
+          <td><span class="tag ${tagClass[activeAction]}">${actionLabel(activeAction)}</span></td>
+          <td>${item}</td>
+          <td>${quantity}</td>
+          <td>${historyLocation}</td>
+          <td>${historyStatus}</td>
+          <td>${ref}</td>
+        `;
+        historyRows.prepend(row);
+        fullHistoryRows.prepend(row.cloneNode(true));
+        loggedToday.textContent = String(Number(loggedToday.textContent) + 1);
+        if (activeAction === "OUT") {
+          outCount.textContent = String(Number(outCount.textContent) + 1);
+        }
+        if (activeAction === "IN") {
+          outCount.textContent = String(Math.max(0, Number(outCount.textContent) - 1));
+        }
+        applyMovementToStock(activeAction, from, toValue, Number(quantity || 1));
+        if (activeAction === "USE") {
+          addUsageRow(item, quantity, from, ref);
+        }
+        showSubmitLogged();
+      });
+
+      applyLanguage(activeLang);
+      loadWorkerProfile();
+      renderStockChips();
+
+      function setView(view) {
+        const showInventory = view === "inventory";
+        const showHistory = view === "history";
+        logView.hidden = showInventory || showHistory;
+        dashboardView.hidden = !(showHistory && activeHistoryTab === "overview");
+        inventoryView.hidden = !showInventory;
+        historyView.hidden = !showHistory;
+        historyOnlySections.forEach((section) => {
+          section.hidden = !(showHistory && activeHistoryTab === "logs");
+        });
+        viewButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.view === view);
+        });
+        logNav.classList.toggle("active", view === "log");
+        inventoryNav.classList.toggle("active", showInventory);
+        historyNav.classList.toggle("active", showHistory);
+      }
+
+      function setHistoryTab(tab) {
+        activeHistoryTab = tab;
+        historyTabButtons.forEach((button) => {
+          button.classList.toggle("primary", button.dataset.historyTab === tab);
+        });
+        setView("history");
+      }
+
+      function resetSelection() {
+        setActiveAction("OUT");
+        setLocationChoice("fromLocation", "Site Store");
+        setLocationChoice("toLocation", "Worker");
+        updateLocationFields();
+        qty.value = "1";
+        submitButton.classList.remove("logged");
+        submitButton.textContent = t("submit");
+        window.clearTimeout(submitResetTimer);
+      }
+
+      function applyActionDefaults(action) {
+        if (action === "OUT") {
+          setLocationChoice("toLocation", "Worker");
+        }
+        if (action === "IN") {
+          setLocationChoice("toLocation", "Site Store");
+        }
+        if (action === "TRANSFER") {
+          setLocationChoice("toLocation", "Van 12");
+        }
+        updateLocationFields();
+      }
+
+      function setActiveAction(action) {
+        activeAction = action;
+        segments.forEach((button) => {
+          button.classList.toggle("active", button.dataset.action === action);
+        });
+      }
+
+      function setLocationChoice(target, value) {
+        document.querySelector(`#${target}`).value = value;
+        document.querySelectorAll(`.location-choice[data-target="${target}"]`).forEach((button) => {
+          button.classList.toggle("active", button.dataset.value === value);
+        });
+      }
+
+      function loadWorkerProfile() {
+        const saved = JSON.parse(localStorage.getItem(workerStorageKey) || "null");
+        if (saved?.name) {
+          workerName.value = saved.name;
+        } else {
+          openProfileDrawer();
+        }
+        if (saved?.team) {
+          activeTeam = saved.team;
+          teamChoices.forEach((button) => {
+            button.classList.toggle("active", button.dataset.team === activeTeam);
+          });
+        }
+        updateWorkerDisplay();
+      }
+
+      function saveWorkerProfile(showSavedToast) {
+        const name = workerName.value.trim();
+        if (name) {
+          localStorage.setItem(workerStorageKey, JSON.stringify({ name, team: activeTeam }));
+        }
+        updateWorkerDisplay();
+        if (showSavedToast) {
+          showToast(name ? t("workerRemembered") : t("enterName"));
+        }
+      }
+
+      function updateWorkerDisplay() {
+        const name = workerName.value.trim();
+        workerDisplay.textContent = name ? `${name} / ${activeTeam}` : `${t("notSet")} / ${activeTeam}`;
+      }
+
+      function applyLanguage(lang) {
+        activeLang = translations[lang] ? lang : "en";
+        localStorage.setItem(langStorageKey, activeLang);
+        document.documentElement.lang = activeLang === "ta" ? "ta" : activeLang === "ko" ? "ko" : "en";
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+          element.placeholder = t(element.dataset.i18nPlaceholder);
+        });
+        langButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.lang === activeLang);
+        });
+        updateWorkerDisplay();
+        updateLocationFields();
+        renderStockChips();
+      }
+
+      function updateLocationFields() {
+        const showPrimary = activeAction !== "IN";
+        const showSecondary = activeAction === "IN" || activeAction === "TRANSFER";
+        primaryLocationField.hidden = !showPrimary;
+        secondaryLocationField.hidden = !showSecondary;
+        locationRow.classList.toggle("single", !(showPrimary && showSecondary));
+
+        if (activeAction === "OUT") {
+          primaryLocationLabel.textContent = t("takeFrom");
+        }
+        if (activeAction === "IN") {
+          secondaryLocationLabel.textContent = t("returnTo");
+        }
+        if (activeAction === "USE") {
+          primaryLocationLabel.textContent = t("useFrom");
+        }
+        if (activeAction === "TRANSFER") {
+          primaryLocationLabel.textContent = t("moveFrom");
+          secondaryLocationLabel.textContent = t("moveTo");
+        }
+      }
+
+      function t(key) {
+        return translations[activeLang]?.[key] || translations.en[key] || key;
+      }
+
+      function openProfileDrawer() {
+        profileDrawer.classList.add("open");
+      }
+
+      function closeProfileDrawer() {
+        profileDrawer.classList.remove("open");
+      }
+
+      function formatDestination(value) {
+        if (value === "Worker") {
+          return `${workerName.value.trim()} / ${activeTeam}`;
+        }
+        return locationLabel(value);
+      }
+
+      function actionLabel(action) {
+        if (action === "OUT") {
+          return t("out");
+        }
+        if (action === "IN") {
+          return t("in");
+        }
+        if (action === "USE") {
+          return t("use");
+        }
+        return t("move");
+      }
+
+      function applyMovementToStock(action, from, to, quantity) {
+        const amount = Math.max(1, quantity || 1);
+        if (action === "OUT") {
+          adjustStock(from, -amount);
+          adjustStock("Out", amount);
+        }
+        if (action === "IN") {
+          adjustStock("Out", -amount);
+          adjustStock(to, amount);
+        }
+        if (action === "USE") {
+          adjustStock(from, -amount);
+        }
+        if (action === "TRANSFER") {
+          adjustStock(from, -amount);
+          adjustStock(to, amount);
+        }
+        renderStockChips();
+      }
+
+      function adjustStock(location, delta) {
+        if (!Object.prototype.hasOwnProperty.call(stockByLocation, location)) {
+          return;
+        }
+        stockByLocation[location] = Math.max(0, stockByLocation[location] + delta);
+      }
+
+      function renderStockChips() {
+        stockLine.innerHTML = "";
+        Object.entries(stockByLocation).forEach(([location, count]) => {
+          if (count <= 0) {
+            return;
+          }
+          const chip = document.createElement("span");
+          chip.className = "stock-chip";
+          chip.textContent = `${count}x ${locationLabel(location)}`;
+          stockLine.append(chip);
+        });
+        renderInventoryStock();
+      }
+
+      function renderInventoryStock() {
+        let total = 0;
+        document.querySelectorAll("[data-stock-location]").forEach((cell) => {
+          const count = stockByLocation[cell.dataset.stockLocation] || 0;
+          total += count;
+          cell.textContent = String(count);
+          cell.classList.toggle("zero", count === 0);
+        });
+        const totalCell = document.querySelector("[data-stock-total]");
+        totalCell.textContent = String(total);
+        totalCell.classList.toggle("zero", total === 0);
+      }
+
+      function addUsageRow(item, quantity, location, ref) {
+        const qtyNumber = Number(quantity || 0);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${t("today")}</td>
+          <td>${item}</td>
+          <td>${qtyNumber}</td>
+          <td>${locationLabel(location)}</td>
+          <td>${ref}</td>
+        `;
+        usageRows.prepend(row);
+        usageToday.textContent = String(Number(usageToday.textContent) + qtyNumber);
+        usageMonth.textContent = String(Number(usageMonth.textContent) + qtyNumber);
+      }
+
+      function renderUsageRows(mode) {
+        document.querySelectorAll("[data-usage-mode]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.usageMode === mode);
+        });
+        if (mode === "month") {
+          usageRows.innerHTML = `
+            <tr><td>${currentMonthLabel()}</td><td>25mm Cable Lug</td><td>320</td><td>${t("siteStore")}</td><td>Multiple</td></tr>
+            <tr><td>${currentMonthLabel()}</td><td>2.5mm Ferrules</td><td>100</td><td>${t("siteStore")}</td><td>Multiple</td></tr>
+          `;
+          return;
+        }
+        usageRows.innerHTML = `
+          <tr><td>${t("today")}</td><td>25mm Cable Lug</td><td>40</td><td>Station Platform</td><td>WO-DB-77</td></tr>
+          <tr><td>${t("today")}</td><td>2.5mm Ferrules</td><td>18</td><td>${t("siteStore")}</td><td>WO-DB-77</td></tr>
+        `;
+      }
+
+      function currentMonthLabel() {
+        return new Date().toLocaleString(undefined, { month: "short", year: "numeric" });
+      }
+
+      function exportHistoryCsv() {
+        const rows = [["Time", "Name", "Action", "Item", "Qty", "Location", "Status", "Ref"]];
+        fullHistoryRows.querySelectorAll("tr").forEach((row) => {
+          rows.push([...row.children].map((cell) => cell.textContent.trim()));
+        });
+        const csv = rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "topaz-movement-history.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function escapeCsvCell(value) {
+        return `"${String(value).replaceAll('"', '""')}"`;
+      }
+
+      function locationLabel(location) {
+        if (location === "Site Store") {
+          return t("siteStore");
+        }
+        if (location === "Platform") {
+          return t("platform");
+        }
+        if (location === "Cabinet") {
+          return t("cabinet");
+        }
+        if (location === "Office") {
+          return t("office");
+        }
+        if (location === "Out") {
+          return t("outLocation");
+        }
+        return location;
+      }
+
+      function showSubmitLogged() {
+        window.clearTimeout(submitResetTimer);
+        submitButton.classList.add("logged");
+        submitButton.textContent = t("logged");
+        submitResetTimer = window.setTimeout(() => {
+          submitButton.classList.remove("logged");
+          submitButton.textContent = t("submit");
+        }, 1400);
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 1800);
+      }
+    </script>
+  </body>
+</html>
