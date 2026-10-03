@@ -276,7 +276,6 @@
       .lang-switch {
         display: flex;
         align-items: center;
-        gap: 4px;
         background: #ffffff;
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -287,16 +286,12 @@
         min-height: 34px;
         border: 0;
         border-radius: 7px;
-        background: transparent;
-        color: #435064;
-        padding: 6px 9px;
-        font-size: 12px;
-        font-weight: 900;
-      }
-
-      .lang-button.active {
         background: var(--navy);
         color: #ffffff;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 900;
+        min-width: 72px;
       }
 
       .workspace {
@@ -1310,9 +1305,7 @@
           </div>
           <div class="top-actions">
             <div class="lang-switch" aria-label="Language switch">
-              <button class="lang-button active" type="button" data-lang="en">EN</button>
-              <button class="lang-button" type="button" data-lang="ko">한국어</button>
-              <button class="lang-button" type="button" data-lang="ta">தமிழ்</button>
+              <button class="lang-button" id="languageCycle" type="button" data-lang="en">EN</button>
             </div>
           </div>
         </header>
@@ -1976,7 +1969,7 @@
       const logNav = document.querySelector("#logNav");
       const inventoryNav = document.querySelector("#inventoryNav");
       const historyNav = document.querySelector("#historyNav");
-      const langButtons = document.querySelectorAll(".lang-button");
+      const languageCycle = document.querySelector("#languageCycle");
       const stockLine = document.querySelector("#stockLine");
       const itemCode = document.querySelector("#itemCode");
       const itemName = document.querySelector("#itemName");
@@ -2002,6 +1995,12 @@
       let submitResetTimer;
       const workerStorageKey = "topaz-worker-profile";
       const langStorageKey = "topaz-language";
+      const languageOrder = ["en", "ko", "ta"];
+      const languageLabels = {
+        en: "EN",
+        ko: "한국어",
+        ta: "தமிழ்",
+      };
       let stockByLocation = {};
       const sampleItems = [
         {
@@ -2458,10 +2457,10 @@
         });
       });
 
-      langButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          applyLanguage(button.dataset.lang);
-        });
+      languageCycle.addEventListener("click", () => {
+        const currentIndex = languageOrder.indexOf(activeLang);
+        const nextLang = languageOrder[(currentIndex + 1) % languageOrder.length];
+        applyLanguage(nextLang);
       });
 
       workerName.addEventListener("change", () => {
@@ -2680,9 +2679,8 @@
         document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
           element.placeholder = t(element.dataset.i18nPlaceholder);
         });
-        langButtons.forEach((button) => {
-          button.classList.toggle("active", button.dataset.lang === activeLang);
-        });
+        languageCycle.dataset.lang = activeLang;
+        languageCycle.textContent = languageLabels[activeLang];
         updateWorkerDisplay();
         updateLocationFields();
         renderStockChips();
