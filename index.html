@@ -550,6 +550,59 @@
         position: relative;
       }
 
+      .item-picker {
+        margin-top: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 8px;
+      }
+
+      .item-picker[hidden] {
+        display: none;
+      }
+
+      .item-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .item-pick-button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfdff;
+        color: var(--ink);
+        min-height: 54px;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .item-pick-button strong,
+      .item-pick-button span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .item-pick-button strong {
+        font-size: 12px;
+      }
+
+      .item-pick-button span {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 3px;
+      }
+
+      .item-pick-button:hover,
+      .item-pick-button.active {
+        border-color: #8ccdc7;
+        background: var(--soft-cyan);
+        color: #075f58;
+      }
+
       .item-card {
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -1340,6 +1393,9 @@
                   </svg>
                   CRL Station Box B2
                 </div>
+                <div class="item-picker" id="itemPicker" hidden>
+                  <div class="item-picker-grid" id="itemPickerGrid" aria-label="Item list"></div>
+                </div>
               </div>
             </div>
 
@@ -1981,6 +2037,8 @@
       const itemCode = document.querySelector("#itemCode");
       const itemName = document.querySelector("#itemName");
       const itemTypeChip = document.querySelector("#itemTypeChip");
+      const itemPicker = document.querySelector("#itemPicker");
+      const itemPickerGrid = document.querySelector("#itemPickerGrid");
       const searchItemButton = document.querySelector("#searchItemButton");
       const submitButton = document.querySelector("#submitButton");
       const resetButton = document.querySelector("#resetButton");
@@ -2494,19 +2552,20 @@
       });
 
       searchItemButton.addEventListener("click", () => {
-        const typedItem = sampleItems.find((item) => item.code.toLowerCase() === itemCode.value.trim().toLowerCase());
-        if (typedItem) {
-          selectSampleItem(typedItem);
-          return;
-        }
-        sampleItemIndex = (sampleItemIndex + 1) % sampleItems.length;
-        selectSampleItem(sampleItems[sampleItemIndex]);
+        itemPicker.hidden = !itemPicker.hidden;
+        renderItemPicker();
       });
 
       itemCode.addEventListener("change", () => {
         const typedItem = sampleItems.find((item) => item.code.toLowerCase() === itemCode.value.trim().toLowerCase());
         if (typedItem) {
           selectSampleItem(typedItem);
+        }
+      });
+
+      itemCode.addEventListener("input", () => {
+        if (!itemPicker.hidden) {
+          renderItemPicker();
         }
       });
 
@@ -2727,6 +2786,35 @@
 
       function t(key) {
         return translations[activeLang]?.[key] || translations.en[key] || key;
+      }
+
+      function renderItemPicker() {
+        const query = itemCode.value.trim().toLowerCase();
+        const matches = sampleItems.filter((item) => {
+          return item.code.toLowerCase().includes(query) || item.name.toLowerCase().includes(query);
+        });
+        itemPickerGrid.innerHTML = "";
+        matches.forEach((item) => {
+          const button = document.createElement("button");
+          button.className = "item-pick-button";
+          button.type = "button";
+          button.classList.toggle("active", item.code === itemCode.value);
+          button.innerHTML = `
+            <strong>${item.name}</strong>
+            <span>${item.code}</span>
+          `;
+          button.addEventListener("click", () => {
+            selectSampleItem(item);
+            itemPicker.hidden = true;
+          });
+          itemPickerGrid.append(button);
+        });
+        if (!matches.length) {
+          const empty = document.createElement("div");
+          empty.className = "item-pick-button";
+          empty.textContent = "No item found";
+          itemPickerGrid.append(empty);
+        }
       }
 
       function isSheetConnected() {
